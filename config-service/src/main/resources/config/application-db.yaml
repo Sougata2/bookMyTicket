@@ -1,0 +1,18 @@
+logging:
+  level:
+    org:
+      hibernate:
+        sql: debug
+    sql: trace
+spring:
+  datasource:
+    username: postgres
+    url: jdbc:postgresql://localhost:5432/book_my_ticket
+    password: sougata
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        hbm2ddl:
+          fail_on_error: true
+          format_sql: true
