@@ -10,6 +10,8 @@ spring:
     url: jdbc:postgresql://localhost:5432/book_my_ticket
     password: sougata
   jpa:
+    hibernate:
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
