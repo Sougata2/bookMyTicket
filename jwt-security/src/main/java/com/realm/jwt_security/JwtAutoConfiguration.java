@@ -12,6 +12,6 @@ public class JwtAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public JwtUtil jwtUtil(JwtProperties properties) {
-        return new JwtUtil(properties.getSecret(), properties.getExpiry());
+        return new JwtUtil(properties.getSecret(), properties.getAccessExpiry(), properties.getRefreshExpiry());
     }
 }

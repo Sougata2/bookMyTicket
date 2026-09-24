@@ -12,48 +12,51 @@ import java.util.function.Function;
 public class JwtUtil {
 
     private final SecretKey signingKey;
-    private final long expirationSeconds;
+    private final long accessSeconds;
+    private final long refreshSeconds;
 
-    public JwtUtil(String secret, long expirationSeconds) {
+    public JwtUtil(String secret, long accessSeconds, long refreshSeconds) {
         if (secret == null || secret.getBytes().length < 32) {
             throw new IllegalArgumentException(
                     "jwt.secret must be set and at least 32 bytes for HS256 — check application.yml / JWT_SECRET env var");
         }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes());
-        this.expirationSeconds = expirationSeconds;
+        this.accessSeconds = accessSeconds;
+        this.refreshSeconds = refreshSeconds;
     }
 
     /**
      * Only services that issue tokens (e.g. auth-service) call this.
      */
-    public String generateToken(Long userId, String email, String role) {
+    public String generateToken(String subject, Map<String, Object> claims) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + expirationSeconds * 1000);
+        Date expiry = new Date(now.getTime() + accessSeconds * 1000);
 
         return Jwts.builder()
-                .subject(email)
-                .claims(Map.of("userId", userId, "role", role))
+                .subject(subject)
+                .claims(claims)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(signingKey)
                 .compact();
     }
 
-    public long getExpirationSeconds() {
-        return expirationSeconds;
+    public long getAccessSeconds() {
+        return accessSeconds;
     }
 
-    public String extractEmail(String token) {
+    public long getRefreshSeconds() {
+        return refreshSeconds;
+    }
+
+    public String extractSubject(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public Long extractUserId(String token) {
-        return extractAllClaims(token).get("userId", Long.class);
+    public String extractCurrentRole(String token) {
+        return extractAllClaims(token).get("currentRole", String.class);
     }
 
-    public String extractRole(String token) {
-        return extractAllClaims(token).get("role", String.class);
-    }
 
     public boolean isTokenValid(String token) {
         try {

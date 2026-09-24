@@ -7,4 +7,5 @@ eureka:
 
 jwt:
   secret: Rhng+FOlTEne/3lMQrmNh5samiSChUD8yOychVwC7EfmrlsMy3Te1bTjuspR2P2T
-  expiry: 3600
+  access-expiry: 3600
+  refresh-expiry: 86400
