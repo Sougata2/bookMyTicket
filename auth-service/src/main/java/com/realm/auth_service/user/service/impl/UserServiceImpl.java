@@ -1,6 +1,5 @@
 package com.realm.auth_service.user.service.impl;
 
-import com.realm.auth_service.role.entity.RoleEntity;
 import com.realm.auth_service.user.details.AppUserDetails;
 import com.realm.auth_service.user.dto.UserDto;
 import com.realm.auth_service.user.entity.UserEntity;
@@ -13,7 +12,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -44,10 +42,9 @@ public class UserServiceImpl implements UserService {
     }
 
     private String generateAccessToken(UserEntity user) {
-        List<String> roles = user.getRoles().stream().map(RoleEntity::getName).toList();
         return jwtUtil.generateToken(
                 user.getEmail(),
-                Map.of("currentRole", user.getCurrentRole().getName(), "roles", roles)
+                Map.of("currentRole", user.getCurrentRole().getName())
         );
     }
 
