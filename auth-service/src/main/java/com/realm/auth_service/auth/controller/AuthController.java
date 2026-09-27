@@ -6,10 +6,7 @@ import com.realm.auth_service.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,5 +23,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthDto> login(@RequestBody AuthDto dto, HttpServletResponse response) {
         return ResponseEntity.ok(service.login(dto.getEmail(), dto.getPassword(), response));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthDto> refresh(@CookieValue(value = "REFRESH_TOKEN") String refreshToken, HttpServletResponse response) {
+        return ResponseEntity.ok(service.refresh(refreshToken, response));
     }
 }

@@ -17,10 +17,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -38,12 +40,8 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
 
-    private UserDetails authenticate(String username, String password) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        return userDetailsService.loadUserByUsername(username);
-    }
-
     @Override
+    @Transactional
     public AuthDto login(String username, String password, HttpServletResponse response) {
         UserEntity user = ((AppUserDetails) authenticate(username, password)).getEntity();
         String accessToken = generateAccessToken(user);
@@ -54,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
                 .secure(true)
                 .httpOnly(true)
                 .sameSite("Strict")
-                .path("/auth/refresh")
+                .path("/auth-service/auth/refresh")
                 .maxAge(jwtUtil.getRefreshSeconds())
                 .build();
 
@@ -71,6 +69,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void register(RegistrationDto dto) {
         String fullName = String.join(
                 " ",
@@ -94,6 +93,54 @@ public class AuthServiceImpl implements AuthService {
         user.setCurrentRole(role);
         user.setRoles(List.of(role));
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public AuthDto refresh(String refreshToken, HttpServletResponse response) {
+        UUID tokenUUID;
+        try {
+            tokenUUID = UUID.fromString(refreshToken);
+        } catch (IllegalArgumentException e) {
+            throw new BadCredentialsException("Invalid refresh token");
+        }
+
+        RefreshTokenEntity existing = refreshTokenRepository.findByToken(tokenUUID)
+                .orElseThrow(() -> new EntityNotFoundException("Invalid refresh token"));
+        if (existing.isRevoked() || existing.getExpiry().isBefore(Instant.now())) {
+            throw new BadCredentialsException("Invalid refresh token");
+        }
+
+        existing.setRevoked(true);
+        refreshTokenRepository.save(existing);
+
+        String accessToken = generateAccessToken(existing.getUser());
+        UUID newRefreshToken = generateRefreshToken(existing.getUser());
+
+        ResponseCookie refreshCookies = ResponseCookie.from("REFRESH_TOKEN", newRefreshToken.toString())
+                .secure(true)
+                .httpOnly(true)
+                .sameSite("Strict")
+                .path("/auth-service/auth/refresh")
+                .maxAge(jwtUtil.getRefreshSeconds())
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookies.toString());
+
+        AuthDto auth = new AuthDto();
+        auth.setAccessToken(accessToken);
+        auth.setEmail(existing.getUser().getEmail());
+        auth.setFirstName(existing.getUser().getFirstName());
+        auth.setLastName(existing.getUser().getLastName());
+        auth.setMiddleName(existing.getUser().getMiddleName());
+        auth.setFullName(existing.getUser().getFullName());
+        auth.setPassword(null);
+        return auth;
+    }
+
+    private UserDetails authenticate(String username, String password) {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        return userDetailsService.loadUserByUsername(username);
     }
 
     private String generateAccessToken(UserEntity user) {
