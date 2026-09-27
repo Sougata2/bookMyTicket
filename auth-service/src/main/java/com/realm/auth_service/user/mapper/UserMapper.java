@@ -1,5 +1,6 @@
 package com.realm.auth_service.user.mapper;
 
+import com.realm.auth_service.role.dto.RoleDto;
 import com.realm.auth_service.role.entity.RoleEntity;
 import com.realm.auth_service.role.mapper.RoleMapper;
 import com.realm.auth_service.user.dto.UserDto;
@@ -23,13 +24,13 @@ public interface UserMapper {
     UserEntity partialUpdate(UserDto userDto, @MappingTarget UserEntity userEntity);
 
     @Named("mapRoles")
-    private List<RoleEntity> mapRoles(List<RoleEntity> roles) {
+    default List<RoleEntity> mapRoles(List<RoleDto> roles) {
         if (roles == null) return new ArrayList<>();
         return roles.stream().map(this::mapRole).toList();
     }
 
     @Named("mapRole")
-    private RoleEntity mapRole(RoleEntity role) {
+    default RoleEntity mapRole(RoleDto role) {
         if (role == null) return null;
         RoleEntity entity = new RoleEntity();
         entity.setId(role.getId());
