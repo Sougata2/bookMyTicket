@@ -5,6 +5,8 @@ import com.realm.auth_service.auth.dto.RegistrationDto;
 import com.realm.auth_service.auth.entity.RefreshTokenEntity;
 import com.realm.auth_service.auth.repository.RefreshTokenRepository;
 import com.realm.auth_service.auth.service.AuthService;
+import com.realm.auth_service.errors.exceptions.ExpiredTokenException;
+import com.realm.auth_service.errors.exceptions.RevokedTokenUseException;
 import com.realm.auth_service.role.entity.RoleEntity;
 import com.realm.auth_service.role.repository.RoleRepository;
 import com.realm.auth_service.user.details.AppUserDetails;
@@ -96,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = RevokedTokenUseException.class)
     public AuthDto refresh(String refreshToken, HttpServletResponse response) {
         UUID tokenUUID;
         try {
@@ -107,8 +109,15 @@ public class AuthServiceImpl implements AuthService {
 
         RefreshTokenEntity existing = refreshTokenRepository.findByToken(tokenUUID)
                 .orElseThrow(() -> new EntityNotFoundException("Invalid refresh token"));
-        if (existing.isRevoked() || existing.getExpiry().isBefore(Instant.now())) {
-            throw new BadCredentialsException("Invalid refresh token");
+
+        // already revoked = stolen token -> revoke all.
+        if (existing.isRevoked()) {
+            refreshTokenRepository.revokeAllByUser(existing.getUser().getId());
+            throw new RevokedTokenUseException("Invalid refresh token");
+        }
+
+        if (existing.getExpiry().isBefore(Instant.now())) {
+            throw new ExpiredTokenException("Invalid refresh token");
         }
 
         existing.setRevoked(true);
