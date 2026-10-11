@@ -3,7 +3,7 @@ package com.realm.gateway_service;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = {"com.realm.jwt_security"})
+@SpringBootApplication
 public class GatewayServiceApplication {
 
     public static void main(String[] args) {

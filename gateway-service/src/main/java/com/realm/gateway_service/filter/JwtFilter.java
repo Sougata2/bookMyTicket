@@ -13,18 +13,26 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
 public class JwtFilter implements GlobalFilter, Ordered {
+    private static final List<String> PUBLIC = List.of(
+            "/auth-service/auth/login",
+            "/auth-service/auth/register",
+            "/auth-service/auth/refresh"
+    );
     private final JwtUtil jwtUtil;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
+        String path = request.getURI().getPath();
 
-        if (request.getURI().getPath().contains("/auth/")) {
+        if (PUBLIC.contains(path)) {
+            System.out.println("Accessing public Routes");
             return chain.filter(exchange);
         }
 
