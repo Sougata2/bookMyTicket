@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "seats",
+        schema = "catalog",
         uniqueConstraints = @UniqueConstraint(columnNames = {"show_id", "row_label", "seat_number"}),
         indexes = @Index(columnList = "show_id"))
 public class SeatEntity extends AuditEntity {

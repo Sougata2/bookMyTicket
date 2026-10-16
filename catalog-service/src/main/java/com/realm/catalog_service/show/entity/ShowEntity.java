@@ -17,10 +17,12 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "shows", indexes = {
-        @Index(columnList = "event_id"),
-        @Index(columnList = "startTime")
-})
+@Table(name = "shows",
+        schema = "catalog",
+        indexes = {
+                @Index(columnList = "event_id"),
+                @Index(columnList = "startTime")
+        })
 public class ShowEntity extends AuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
