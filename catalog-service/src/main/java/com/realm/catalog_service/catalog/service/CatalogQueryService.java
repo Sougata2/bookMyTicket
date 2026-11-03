@@ -1,5 +1,6 @@
 package com.realm.catalog_service.catalog.service;
 
+import com.realm.catalog_service.catalog.dto.PageResponse;
 import com.realm.catalog_service.event.dto.EventDto;
 import com.realm.catalog_service.event.entity.EventEntity;
 import com.realm.catalog_service.event.mapper.EventMapper;
@@ -13,13 +14,18 @@ import com.realm.catalog_service.show.mapper.ShowMapper;
 import com.realm.catalog_service.show.repository.ShowRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CatalogQueryService {
     private final EventRepository eventRepository;
     private final SeatRepository seatRepository;
@@ -27,6 +33,17 @@ public class CatalogQueryService {
     private final EventMapper eventMapper;
     private final SeatMapper seatMapper;
     private final ShowMapper showMapper;
+
+    public PageResponse<EventDto> listEvents(String city, int page, int size) {
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, 100), Sort.by("title"));
+        Page<EventEntity> result = (city == null || city.isBlank())
+                ? eventRepository.findAll(pageable)
+                : eventRepository.findNowShowingInCity(city, Instant.now(), pageable);
+        return new PageResponse<>(
+                result.getContent().stream().map(eventMapper::toDto).toList(),
+                result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages()
+        );
+    }
 
 
     public EventDto getEvent(Long eventId) {
