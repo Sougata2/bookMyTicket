@@ -6,6 +6,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
@@ -24,14 +25,23 @@ public class JwtFilter implements GlobalFilter, Ordered {
             "/auth-service/auth/register",
             "/auth-service/auth/refresh"
     );
+    private static final List<String> PUBLIC_GET_PREFIXES = List.of(
+            "/catalog-service/catalog/events",
+            "/catalog-service/catalog/shows"
+    );
     private final JwtUtil jwtUtil;
+
+    private static boolean isPublic(ServerHttpRequest request, String path) {
+        return HttpMethod.GET.equals(request.getMethod())
+                && PUBLIC_GET_PREFIXES.stream().anyMatch(p -> path.equals(p) || path.startsWith(p + "/"));
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
 
-        if (PUBLIC.contains(path)) {
+        if (PUBLIC.contains(path) || isPublic(request, path)) {
             System.out.println("Accessing public Routes");
             return chain.filter(exchange);
         }

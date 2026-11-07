@@ -23,7 +23,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth ->
                         auth
-                                .requestMatchers(HttpMethod.GET, "/event/**", "/shows/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/catalog/events/**", "/catalog/shows/**").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .anyRequest().permitAll()
                 )
