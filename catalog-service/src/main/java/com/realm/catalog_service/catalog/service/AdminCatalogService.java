@@ -75,7 +75,7 @@ public class AdminCatalogService {
         List<SeatEntity> seats = new ArrayList<>(screen.getTotalRows() * screen.getSeatsPerRow());
         for (int r = 0; r < screen.getTotalRows(); r++) {
             String rowLabel = String.valueOf((char) ('A' + r));
-            for (int n = 1; n < screen.getSeatsPerRow(); n++) {
+            for (int n = 1; n <= screen.getSeatsPerRow(); n++) {
                 SeatEntity seat = new SeatEntity();
                 seat.setShow(savedShow);
                 seat.setRowLabel(rowLabel);
