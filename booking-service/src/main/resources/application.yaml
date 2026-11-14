@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: booking-service
+  profiles:
+    active: db
+  config:
+    import: configserver:http://localhost:8888
+  data:
+    redis:
+      database: 1
+server:
+  port: 8083
