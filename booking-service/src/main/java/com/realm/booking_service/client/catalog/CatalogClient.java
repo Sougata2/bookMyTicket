@@ -8,12 +8,12 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-@FeignClient(name = "catalog-service")
+@FeignClient(name = "catalog-service", path = "/catalog")
 public interface CatalogClient {
-    @GetMapping("/catalog/shows/{id}")
+    @GetMapping("/shows/{id}")
     ShowDto getShow(@PathVariable Long id);
 
-    @GetMapping("/catalog/shows/{id}/seats")
+    @GetMapping("/shows/{id}/seats")
     List<SeatDto> getSeats(@PathVariable Long id);
 
     enum SeatStatus {
